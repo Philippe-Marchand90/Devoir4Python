@@ -1,8 +1,8 @@
 import numpy as np
-from tridiagonal import solve_tridiagonal
+from tridiagonal import tridiagonal
 
 def problimite(h, P, Q, R, a, b, alpha, beta):
-    N = len(P) - 2  # N points intérieurs
+    N = len(P) - 2  
     D = np.zeros(N)
     I = np.zeros(N - 1)
     S = np.zeros(N - 1)
@@ -25,7 +25,7 @@ def problimite(h, P, Q, R, a, b, alpha, beta):
     b_vec[0] += (1 + P[1] * h / 2) * alpha
     b_vec[-1] += (1 - P[N] * h / 2) * beta
 
-    y_inner = solve_tridiagonal(D, I, S, b_vec)
+    y_inner = tridiagonal(D, I, S, b_vec)
     y = np.concatenate(([alpha], y_inner, [beta]))
 
     return y
