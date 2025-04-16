@@ -4,10 +4,12 @@ from scipy.sparse import diags, csr_matrix
 from scipy.sparse.linalg import spsolve
 
 
-def tridiagonal(I, D, S, b):
-    A = diags([I, D, S], offsets=[-1, 0, 1])
-    A_csr = csr_matrix(A)
-    x = spsolve(A_csr, b)
+def tridiagonal(D, I, S, b):
+    N = len(D)
+    diagonals = [I, D, S]
+    offsets = [-1, 0, 1]
+    A_sparse = diags(diagonals, offsets, shape=(N, N), format='csr')
+    x = spsolve(A_sparse, b)
     return x
 
 #test

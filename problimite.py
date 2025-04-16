@@ -2,33 +2,23 @@ import numpy as np
 from tridiagonal import tridiagonal
 
 def problimite(h, P, Q, R, a, b, alpha, beta):
-    N = len(P) - 2  # nombre de points intérieurs
-
-    D = np.zeros(N)         # diagonale principale
-    I = np.zeros(N - 1)     # diagonale inférieure
-    S = np.zeros(N - 1)     # diagonale supérieure
-    b_vec = np.zeros(N)     # vecteur de droite
-
-    for i in range(N):
-        pi = P[i + 1]
-        qi = Q[i + 1]
-        ri = R[i + 1]
-
-        D[i] = 2 + qi * h**2
-        b_vec[i] = -ri * h**2
-
-        if i > 0:
-            I[i - 1] = -1 - pi * h / 2
-        if i < N - 1:
-            S[i] = -1 + pi * h / 2
-
-    # Ajout des conditions de bord
-    b_vec[0] += (1 + P[1] * h / 2) * alpha
-    b_vec[-1] += (1 - P[N] * h / 2) * beta
-
-    # Résolution du système
-    y_inner = tridiagonal(D, I, S, b_vec)
-
-    # Assemblage du vecteur y complet (avec bornes)
-    y = np.concatenate(([alpha], y_inner, [beta]))
-    return y
+  
+    N = len(P)
+    h_sq = h**2
+    
+    D = 2 + Q * h_sq
+    I = -1 - P[1:] * h / 2
+    S = -1 + P[:-1] * h / 2
+    
+    b_vec = -R * h_sq
+    b_vec[0] += (1 + P[0] * h / 2) * alpha
+    b_vec[-1] += (1 - P[-1] * h / 2) * beta
+    
+    y_interior = tridiagonal(D, I, S, b_vec)
+    
+    y_hat = np.zeros(N + 2)
+    y_hat[0] = alpha
+    y_hat[-1] = beta
+    y_hat[1:-1] = y_interior
+    
+    return y_hat
