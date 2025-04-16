@@ -12,13 +12,12 @@ def r(x):
     return -1.6 / x**4
 
 def solution_exacte(x):
-    d = 0.9**2  # d = 0.81
-    c = 0.4 / d  # impose y(0.9) = 0
+    d = 0.9**2
+    c = 0.4 / d
     return (c - 0.4 / x**2) - (c - 0.4 / d) * (np.log(x) / np.log(0.9))
 
-def resoudre_et_tracer(h, tracer=True):
-    a = 0.9
-    b = 1.0
+def resoudre(h):
+    a, b = 0.9, 1.0
     N = int((b - a) / h)
     x = np.linspace(a, b, N + 2)
 
@@ -29,39 +28,41 @@ def resoudre_et_tracer(h, tracer=True):
     y_num = problimite(h, P, Q, R, a, b, 0, 0)
     y_exact = solution_exacte(x)
 
-    if tracer:
-        plt.plot(x, y_num, label=f'Solution numérique h={h:.5f}')
-        plt.plot(x, y_exact, '--', label='Solution exacte')
-
     erreur_max = np.max(np.abs(y_num - y_exact))
-    return h, erreur_max
+    return x, y_num, y_exact, erreur_max
 
-# --- Partie a : Tracé pour h = 1/30 et h = 1/100 ---
-plt.figure()
-resoudre_et_tracer(1/30)
-resoudre_et_tracer(1/100)
-plt.xlabel("x")
-plt.ylabel("y")
-plt.title("Comparaison solution numérique / exacte")
+# --- Partie a : Comparaison solutions ---
+x1, y1, y_ex1, _ = resoudre(1/30)
+x2, y2, y_ex2, _ = resoudre(1/100)
+
+plt.figure(figsize=(8, 5))
+plt.plot(x1, y1, label='h = 1/30')
+plt.plot(x2, y2, label='h = 1/100')
+plt.plot(x1, y_ex1, '--', label='Solution exacte')
+plt.xlabel('x')
+plt.ylabel('y(x)')
+plt.title("Comparaison des solutions numériques et exactes")
 plt.legend()
-plt.grid()
+plt.grid(True)
+plt.tight_layout()
 plt.savefig("fig_comparaison.png")
 plt.show()
 
-# --- Partie b : Tracé de l'erreur E(h) en log-log ---
+# --- Partie b : Erreur max E(h) en log-log ---
 hs = [1e-2, 1e-3, 1e-4, 1e-5]
-erreurs = []
+errors = []
 
 for h in hs:
-    _, err = resoudre_et_tracer(h, tracer=False)
-    erreurs.append(err)
+    _, _, _, err = resoudre(h)
+    errors.append(err)
 
-plt.figure()
-plt.loglog(hs, erreurs, 'o-', label='Erreur max E(h)')
-plt.xlabel("h")
-plt.ylabel("Erreur max")
-plt.title("Erreur en fonction de h (échelle log-log)")
-plt.grid(True, which="both", ls="--")
+plt.figure(figsize=(8, 5))
+plt.loglog(hs, errors, 'o-', label='Erreur max E(h)')
+plt.xlabel("h (pas)")
+plt.ylabel("Erreur maximale")
+plt.title("Erreur en fonction du pas h (échelle log-log)")
+plt.grid(True, which="both", linestyle="--")
 plt.legend()
+plt.tight_layout()
 plt.savefig("fig_erreur_loglog.png")
 plt.show()
