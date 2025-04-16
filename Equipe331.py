@@ -1,72 +1,62 @@
+# equipeX.py
 import numpy as np
 import matplotlib.pyplot as plt
-from problimite import problimite
+from problimite import solve_boundary_problem
 
-# Définir les fonctions p(x), q(x), r(x)
 def p(x):
-    return 1 / x
+    return -1 / x
 
 def q(x):
-    return 0 * x
+    return 0
 
 def r(x):
     return -1.6 / x**4
 
-# Solution exacte de l'équation
-def solution_exacte(x):
-    d = 0.9**2
-    c = 0.4 / d  # impose y(0.9) = 0
-    return (c - 0.4 / x**2) - (c - 0.4 / d) * (np.log(x) / np.log(0.9))
+def y_exact(x):
+    c = 1
+    d = 1
+    return (c - 0.4 / x**2) - (c - 0.4 / d) * np.log(x) / np.log(0.9)
 
-# Fonction pour calculer la solution numérique et exacte pour un pas donné
-def resoudre(h):
-    a, b = 0.9, 1
-    N = int((b - a) / h)
-    x = np.linspace(a, b, N + 2)
+def run_simulation(h):
+    a, b = 0.9, 1.0
+    alpha, beta = 0, 0
+    N = int((b - a) / h) - 1
+    x_nodes = np.linspace(a + h, b - h, N)
+    P = p(x_nodes)
+    Q = q(x_nodes)
+    R = r(x_nodes)
+    y_approx = solve_boundary_problem(h, P, Q, R, a, b, alpha, beta)
+    return x_nodes, y_approx
 
-    P = p(x)
-    Q = q(x)
-    R = r(x)
+def plot_solutions():
+    for h in [1/30, 1/100]:
+        x_nodes, y_approx = run_simulation(h)
+        y_true = y_exact(x_nodes)
+        plt.plot(x_nodes, y_approx, label=f"Approx h={h:.5f}")
+    x_full = np.linspace(0.9, 1.0, 1000)
+    plt.plot(x_full, y_exact(x_full), label="Exact", linestyle="--")
+    plt.xlabel("x")
+    plt.ylabel("y(x)")
+    plt.title("Comparaison des solutions")
+    plt.legend()
+    plt.grid()
+    plt.show()
 
-    y_num = problimite(h, P, Q, R, a, b, 0, 0)
-    y_exact = solution_exacte(x)
+def plot_error():
+    hs = [10**(-i) for i in range(2, 6)]
+    errors = []
+    for h in hs:
+        x_nodes, y_approx = run_simulation(h)
+        y_true = y_exact(x_nodes)
+        error = np.max(np.abs(y_approx - y_true))
+        errors.append(error)
+    plt.loglog(hs, errors, marker='o')
+    plt.xlabel("h")
+    plt.ylabel("E(h)")
+    plt.title("Erreur maximale vs pas h")
+    plt.grid(True, which="both", ls="--")
+    plt.show()
 
-    erreur_max = np.max(np.abs(y_num - y_exact))
-
-    return x, y_num, y_exact, erreur_max
-
-# --- Partie a : Comparaison des solutions pour deux valeurs de h ---
-x1, y1, y_ex1, _ = resoudre(1 / 30)
-x2, y2, y_ex2, _ = resoudre(1 / 100)
-
-plt.figure(figsize=(8, 5))
-plt.plot(x1, y1, label='h = 1/30')
-plt.plot(x2, y2, label='h = 1/100')
-plt.plot(x1, y_ex1, '--', label='Solution exacte')
-plt.xlabel("x")
-plt.ylabel("y(x)")
-plt.title("Comparaison solutions numérique / exacte")
-plt.legend()
-plt.grid(True)
-plt.tight_layout()
-plt.savefig("fig_comparaison.png")
-plt.show()
-
-# --- Partie b : Graphe de l’erreur max E(h) ---
-hs = [1e-2, 1e-3, 1e-4, 1e-5]
-erreurs = []
-
-for h in hs:
-    _, _, _, erreur = resoudre(h)
-    erreurs.append(erreur)
-
-plt.figure(figsize=(8, 5))
-plt.loglog(hs, erreurs, 'o-', label='Erreur E(h)')
-plt.xlabel("h")
-plt.ylabel("Erreur maximale")
-plt.title("Erreur en fonction du pas h (log-log)")
-plt.grid(True, which="both", linestyle="--")
-plt.legend()
-plt.tight_layout()
-plt.savefig("fig_erreur_loglog.png")
-plt.show()
+if __name__ == "__main__":
+    plot_solutions()
+    plot_error()

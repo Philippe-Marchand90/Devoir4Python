@@ -1,33 +1,24 @@
 import numpy as np
-from tridiagonal import tridiagonal 
+from tridiagonal import solve_tridiagonal
 
-def problimite(h, P, Q, R, a, b, alpha, beta):
-
-    N = len(P) - 2  
-
-    D = np.zeros(N)      
-    I = np.zeros(N - 1)
-    S = np.zeros(N - 1)
-    b_vec = np.zeros(N)
+def solve_boundary_problem(h, P, Q, R, a, b, alpha, beta):
+    N = len(P)
+    
+    D = np.zeros(N)
+    I = np.zeros(N-1)
+    S = np.zeros(N-1)
+    rhs = np.zeros(N)
 
     for i in range(N):
-        pi = P[i + 1]
-        qi = Q[i + 1]
-        ri = R[i + 1]
+        pi, qi, ri = P[i], Q[i], R[i]
+        D[i] = 2 + h**2 * qi
+        if i != 0:
+            I[i-1] = -1 - h * pi / 2
+        if i != N - 1:
+            S[i] = -1 + h * pi / 2
+        rhs[i] = -h**2 * ri
 
-        D[i] = 2 + qi * h**2
-        b_vec[i] = -ri * h**2
+    rhs[0] += (1 + h * P[0] / 2) * alpha
+    rhs[-1] += (1 - h * P[-1] / 2) * beta
 
-        if i > 0:
-            I[i - 1] = -1 - pi * h / 2
-        if i < N - 1:
-            S[i] = -1 + pi * h / 2
-
-
-    b_vec[0] += (1 + P[1] * h / 2) * alpha
-    b_vec[-1] += (1 - P[N] * h / 2) * beta
-
-    y_inner = tridiagonal(D, I, S, b_vec)
-
-    y = np.concatenate(([alpha], y_inner, [beta]))
-    return y
+    return solve_tridiagonal(D, I, S, rhs)
